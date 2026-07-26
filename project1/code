@@ -1,0 +1,107 @@
+#import Libraries
+import pandas as pd
+import numpy as np
+
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+from sklearn.impute import KNNImputer
+from scipy import stats 
+#load dataset
+df = pd.read_excel("Dataset for Data Analytics.xlsx")
+print("Dataset Loaded Successfully")
+print("\nFirst 5 Rows")
+print(df.head())
+print("\nDataset Shape")
+print(df.shape)
+print("\nColumn Names")
+print(df.columns.tolist())
+print("\nDataset Information")
+print(df.info())
+print("\nSummary Statistics")
+print(df.describe())
+#perform EDA
+#checking missing values
+print("\nMissing Values")
+print(df.isnull().sum())
+#remove the column
+print(df.drop("CouponCode", axis=1, inplace=True))
+
+numeric_columns = df.select_dtypes(include="number")
+print(numeric_columns.skew())
+#refill the missing values
+print(df.isnull().sum())
+# STEP 4 : Remove Duplicate Rows
+
+duplicates = df.duplicated().sum()
+
+print("\nDuplicate Rows :", duplicates)
+
+df.drop_duplicates(inplace=True)
+
+print("Duplicates Removed")
+#  Outlier Detection Using IQR
+print("removed outliers")  
+
+columns=['Quantity', 'UnitPrice', 'ItemsInCart', 'TotalPrice']
+
+for col in columns:
+   Q1 = df[col].quantile(0.25)
+   Q3 = df[col].quantile(0.75)
+
+   IQR = Q3 - Q1
+    
+   lower = Q1 - 1.5*IQR
+
+   upper = Q3 + 1.5*IQR
+
+   outliers = df[(df[col]<lower)|(df[col]>upper)]
+   print(len(outliers))
+   #remove outliers
+   for col in columns:
+       q1=df[col].quantile(0.25)
+       q3=df[col].quantile(0.75)
+       iqr=q3-q1
+       upper_limit=q3+(1.5*iqr)
+       lower_limit=q1-(1.5*iqr)
+       outliers=df[(df[col]>upper_limit) | (df[col]<lower_limit)]
+       df[col]=df[col].clip(lower_limit,upper_limit)
+#feature engineering
+print("feature engineering")   
+# Feature 1
+df["AvgPricePerItem"] = df["TotalPrice"] / df["Quantity"]
+
+# Feature 2
+df["Date"] = pd.to_datetime(df["Date"])
+
+df["WeekendOrder"] = (df["Date"].dt.dayofweek >= 5).astype(int)
+# Feature 3
+df["HighValueOrder"] = (df["TotalPrice"] > df["TotalPrice"].median()).astype(int)
+print(df.columns)
+# STEP 7 : Visualizations
+
+# Histogram
+df[columns].hist(figsize=(12,8))
+plt.tight_layout()
+plt.show()
+
+# Boxplots
+for col in columns:
+    plt.figure(figsize=(6,4))
+    sns.boxplot(x=df[col])
+    plt.title(col)
+    plt.show()
+
+# Correlation Heatmap
+plt.figure(figsize=(10,8))
+sns.heatmap(df[columns].corr(),annot=True,cmap="coolwarm")
+plt.title("Correlation Heatmap")
+plt.show()
+# STEP 8 : Save Clean Dataset
+
+
+df.to_excel("Cleaned_Dataset.xlsx",index=False)
+
+print("\nClean Dataset Saved Successfully")
+
+print("\nProject Completed Successfully")
